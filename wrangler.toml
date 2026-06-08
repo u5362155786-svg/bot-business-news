@@ -2,5 +2,6 @@ name = "bot-business-news"
 main = "index.js"
 compatibility_date = "2026-06-08"
 
+# C'est ici qu'on définit la liaison IA pour qu'elle ne disparaisse plus
 [ai]
 binding = "AI"
