@@ -1,20 +1,32 @@
 export default {
   async fetch(request, env) {
     try {
-      const rssUrl = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=fr&gl=FR&ceid=FR:fr";
-      const xml = await fetch(rssUrl).then(r => r.text());
-      // On simplifie l'extraction pour être rapide
-      const title = xml.match(/<title>(.*?)<\/title>/)?.[1] || "Actu Business";
+      // 1. Vérification de la liaison AI
+      if (!env.AI) {
+        return new Response("Erreur : La liaison 'AI' n'est pas configurée dans wrangler.toml", { status: 500 });
+      }
 
-      // Tentative d'IA avec un timeout implicite
+      // 2. Récupération simple d'un titre
+      const rssUrl = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=fr&gl=FR&ceid=FR:fr";
+      const rssResponse = await fetch(rssUrl);
+      const xml = await rssResponse.text();
+      
+      // Extraction rapide du premier titre
+      const titleMatch = xml.match(/<title>(.*?)<\/title>/);
+      const title = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') : "Finance Business News";
+
+      // 3. Appel de l'IA (Stable Diffusion)
       const image = await env.AI.run('@cf/stabilityai/stable-diffusion-xl-base-1.0', {
-        prompt: `Minimalist professional business background for: ${title}`
+        prompt: `Professional business news illustration about: ${title}, minimalist, high quality, 4k`
       });
 
-      return new Response(image, { headers: { "Content-Type": "image/png" } });
+      // 4. Retour de l'image
+      return new Response(image, { 
+        headers: { "Content-Type": "image/png" } 
+      });
+
     } catch (err) {
-      // En cas d'erreur IA, on renvoie une image de couleur simple au lieu de planter
-      return new Response("IA indisponible temporairement", { status: 503 });
+      return new Response("Erreur critique : " + err.message, { status: 500 });
     }
   }
 };
