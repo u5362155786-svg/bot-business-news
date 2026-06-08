@@ -2,6 +2,5 @@ name = "bot-business-news"
 main = "src/index.js"
 compatibility_date = "2026-06-08"
 
-# Cette section lie officiellement l'IA à votre code
 [ai]
 binding = "AI"
