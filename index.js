@@ -7,7 +7,7 @@ export default {
       const title = rss.match(/<title>(.*?)<\/title>/)?.[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || "Business News";
 
       // 2. Génération image
-      const response = await env.AI.run('@cf/black-forest-labs/flux-1-schnell', {
+      const response = await env.AI.run('@cf/stabilityai/stable-diffusion-xl-base-1.0', {
         prompt: `Professional, clean, minimalist illustration about: ${title}`
       });
 
