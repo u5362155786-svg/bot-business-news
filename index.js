@@ -1,16 +1,24 @@
 export default {
   async fetch(request, env) {
-    // On génère un SVG simple directement
-    const svg = `
-      <svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="blue"/>
-        <text x="50%" y="50%" font-family="Arial" font-size="20" fill="white" text-anchor="middle">
-          Connexion Worker OK !
-        </text>
-      </svg>`;
+    try {
+      // 1. Récupération simple d'une info business
+      const rssUrl = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=fr&gl=FR&ceid=FR:fr";
+      const rss = await fetch(rssUrl).then(r => r.text());
+      const title = rss.match(/<title>(.*?)<\/title>/)?.[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || "Business News";
 
-    return new Response(svg, {
-      headers: { "Content-Type": "image/svg+xml" }
-    });
+      // 2. Appel au modèle IA
+      const image = await env.AI.run('@cf/black-forest-labs/flux-1-schnell', {
+        prompt: `Professional, clean, minimalist illustration about: ${title}`
+      });
+
+      // 3. Retour de l'image
+      return new Response(image, {
+        headers: { "Content-Type": "image/png" }
+      });
+
+    } catch (e) {
+      // En cas d'erreur IA, on affiche le message d'erreur au lieu d'une icône brisée
+      return new Response("Erreur IA : " + e.message, { status: 500 });
+    }
   }
 };
