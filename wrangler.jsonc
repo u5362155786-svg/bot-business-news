@@ -7,8 +7,4 @@
     "logs": {
       "invocation_logs": true
     }
-  },
-  "triggers": {
-    "crons": ["09 * * *"]
-  }
 }
