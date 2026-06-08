@@ -11,7 +11,8 @@ export default {
     const xml = await response.text();
     
     const items = extractBuzzItems(xml);
-    const bestArticle = items.sort((a, b) => b.score - a.score)[0];
+    // On sélectionne le premier article (le plus buzzant)
+    const bestArticle = items.length > 0 ? items.sort((a, b) => b.score - a.score)[0] : { title: "Pas d'actu disponible" };
     
     // Génération et affichage de l'image SVG
     const svg = generateImage(bestArticle.title);
@@ -53,15 +54,27 @@ function extractBuzzItems(xml) {
 }
 
 function generateImage(title) {
-  // Coupe le titre pour qu'il tienne dans le design
-  const displayTitle = title.length > 60 ? title.substring(0, 57) + "..." : title;
+  // Découpage intelligent du texte pour faire des lignes
+  const words = title.split(' ');
+  let lines = [];
+  let currentLine = "";
   
+  words.forEach(word => {
+    if ((currentLine + word).length < 25) {
+      currentLine += word + " ";
+    } else {
+      lines.push(currentLine);
+      currentLine = word + " ";
+    }
+  });
+  lines.push(currentLine);
+
   return `
   <svg width="1080" height="1080" viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
     <rect width="1080" height="1080" fill="#1a1a1a"/>
     <rect y="880" width="1080" height="200" fill="#cc0000"/>
-    <text x="540" y="500" font-family="Arial" font-size="60" fill="white" text-anchor="middle" font-weight="bold">
-      ${displayTitle}
+    <text x="540" y="400" font-family="Arial" font-size="50" fill="white" text-anchor="middle" font-weight="bold">
+      ${lines.map((line, i) => `<tspan x="540" dy="${i * 60}">${line}</tspan>`).join('')}
     </text>
     <text x="540" y="980" font-family="Arial" font-size="40" fill="white" text-anchor="middle" font-weight="bold">
       FLASH BUSINESS - L'ACTU EN DIRECT
