@@ -1,21 +1,24 @@
 export default {
   async fetch(request, env) {
     try {
-      // Test de la liaison IA
-      if (!env.AI) {
-        throw new Error("La liaison 'AI' n'est pas configurée dans wrangler.toml");
-      }
+      // 1. Récupération simple d'une info business
+      const rssUrl = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=fr&gl=FR&ceid=FR:fr";
+      const rss = await fetch(rssUrl).then(r => r.text());
+      const title = rss.match(/<title>(.*?)<\/title>/)?.[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || "Business News";
 
-      const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
-        prompt: "Réponds par une phrase simple : Connexion IA réussie."
+      // 2. Appel au modèle d'image
+      // On utilise Flux.1 pour une meilleure qualité
+      const image = await env.AI.run('@cf/black-forest-labs/flux-1-schnell', {
+        prompt: `Professional, clean, minimalist illustration about: ${title}`
       });
 
-      return new Response(JSON.stringify(response), {
-        headers: { "content-type": "application/json" }
+      // 3. Retour de l'image binaire
+      return new Response(image, {
+        headers: { "Content-Type": "image/png" }
       });
+
     } catch (e) {
-      // Si ça plante, on affiche l'erreur au lieu d'un écran blanc 1101
-      return new Response("Erreur : " + e.message, { status: 500 });
+      return new Response("Erreur IA : " + e.message, { status: 500 });
     }
   }
 };
