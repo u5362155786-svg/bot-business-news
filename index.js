@@ -1,22 +1,21 @@
 export default {
   async fetch(request, env) {
     try {
-      // 1. On récupère le titre réel de l'actualité
       const rssUrl = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=fr&gl=FR&ceid=FR:fr";
       const rss = await fetch(rssUrl).then(r => r.text());
-      const title = rss.match(/<title>(.*?)<\/title>/)?.[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || "Actualité Business";
+      const title = rss.match(/<title>(.*?)<\/title>/)?.[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || "Business";
 
-      // 2. On demande à l'IA une image spécifique à ce titre
-      // J'ai ajouté des détails pour un style "Business" propre
+      // On utilise SDXL Base, plus compatible et très stable
       const image = await env.AI.run('@cf/stabilityai/stable-diffusion-xl-base-1.0', {
-        prompt: `A high-quality, professional, modern business news header image. Clean layout, minimalist style, corporate aesthetic, representing the theme: ${title}. High definition, no text on image.`
+        prompt: `Professional business photography, sharp focus, 8k, high quality, theme: ${title}`,
+        negative_prompt: "blurry, soft focus, painting, illustration, cartoon, low quality, distorted, watermark, text"
       });
 
       return new Response(image, {
         headers: { "Content-Type": "image/png" }
       });
     } catch (e) {
-      return new Response("Erreur : " + e.message, { status: 500 });
+      return new Response("Erreur IA : " + e.message, { status: 500 });
     }
   }
 };
