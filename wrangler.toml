@@ -2,10 +2,5 @@ name = "bot-business-news"
 main = "index.js"
 compatibility_date = "2026-06-08"
 
-# 1. Déclaration de la liaison IA (remplace le bouton "Add binding")
 [ai]
 binding = "AI"
-
-# 2. Si vous aviez d'autres réglages (ex: variables), mettez-les ici :
-# [vars]
-# MON_TOKEN = "xyz"
