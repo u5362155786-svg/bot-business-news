@@ -1,32 +1,46 @@
 export default {
   async scheduled(event, env, ctx) {
-    // Déclenché par le cron trigger
     await handleBotLogic();
   },
   async fetch(request, env, ctx) {
-    // Permet de déclencher manuellement le bot via votre URL Cloudflare
     await handleBotLogic();
-    return new Response('Bot Business déclenché avec succès !');
+    return new Response('Analyse des news terminée.');
   }
 };
 
 async function handleBotLogic() {
-  console.log("Démarrage de la récupération des actus...");
+  console.log("Initialisation de la collecte...");
 
-  // Exemple : Flux RSS de Google News (Business)
   const rssUrl = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=fr&gl=FR&ceid=FR:fr";
 
   try {
     const response = await fetch(rssUrl);
-    const rssText = await response.text();
+    const xml = await response.text();
     
-    // Note : Pour une vraie automatisation, nous utiliserons un parseur XML ici
-    // Pour l'instant, nous vérifions simplement que le flux est bien reçu
-    if (response.ok) {
-      console.log("Flux RSS récupéré avec succès.");
-      // Ici, nous ajouterons bientôt la logique de transformation en image
-    }
+    // Extraction simplifiée des titres (le format RSS est en XML)
+    const items = extractRssItems(xml);
+    
+    console.log(`Nombre d'articles trouvés : ${items.length}`);
+    items.forEach((item, index) => {
+      console.log(`${index + 1}. ${item.title}`);
+    });
+
   } catch (error) {
-    console.error("Erreur lors de la récupération du flux :", error);
+    console.error("Erreur de récupération :", error);
   }
+}
+
+function extractRssItems(xml) {
+  const items = [];
+  // Utilisation d'expressions régulières pour extraire les balises <title>
+  const regex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+  
+  while ((match = regex.exec(xml)) !== null) {
+    const titleMatch = /<title><!\[CDATA\[(.*?)\]\]><\/title>/.exec(match[1]);
+    if (titleMatch) {
+      items.push({ title: titleMatch[1] });
+    }
+  }
+  return items.slice(0, 5); // On ne garde que les 5 premiers pour votre carrousel
 }
