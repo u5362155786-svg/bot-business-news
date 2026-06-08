@@ -1,17 +1,31 @@
 export default {
-  async fetch(request) {
-    const title = "ACTUALITÉ BUSINESS"; // Titre simple pour tester
-    
-    const svg = `
-      <svg width="600" height="300" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="#cc0000"/>
-        <text x="50%" y="50%" font-family="Arial" font-size="30" fill="white" text-anchor="middle" font-weight="bold">
-          ${title}
-        </text>
-      </svg>`;
+  async fetch(request, env) {
+    try {
+      // 1. Récupération des news
+      const rssUrl = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=fr&gl=FR&ceid=FR:fr";
+      const rssResponse = await fetch(rssUrl);
+      const xml = await rssResponse.text();
+      const titleMatch = xml.match(/<title>(.*?)<\/title>/);
+      const originalTitle = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') : "Finance Business News";
 
-    return new Response(svg, {
-      headers: { "Content-Type": "image/svg+xml" }
-    });
+      // 2. IA : Reformulation percutante (Llama-3)
+      const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+        prompt: `Reformule ce titre en une phrase courte et virale pour Instagram : ${originalTitle}`
+      });
+      const improvedTitle = aiResponse.response || originalTitle;
+
+      // 3. IA : Génération d'image (Stable Diffusion)
+      const image = await env.AI.run('@cf/stabilityai/stable-diffusion-xl-base-1.0', {
+        prompt: `Professional business news illustration, clean, minimalist, high quality, concept of: ${improvedTitle}`
+      });
+
+      // 4. Retourner l'image générée
+      return new Response(image, { 
+        headers: { "Content-Type": "image/png" } 
+      });
+
+    } catch (err) {
+      return new Response("Erreur IA : " + err.message, { status: 500 });
+    }
   }
 };
