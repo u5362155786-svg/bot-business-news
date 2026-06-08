@@ -4,43 +4,42 @@ export default {
   },
   async fetch(request, env, ctx) {
     await handleBotLogic();
-    return new Response('Analyse des news terminée.');
+    return new Response('Analyse terminée, vérifiez les logs.');
   }
 };
 
 async function handleBotLogic() {
   console.log("Initialisation de la collecte...");
 
+  // Flux RSS Business de Google News
   const rssUrl = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=fr&gl=FR&ceid=FR:fr";
 
   try {
     const response = await fetch(rssUrl);
     const xml = await response.text();
     
-    // Extraction simplifiée des titres (le format RSS est en XML)
-    const items = extractRssItems(xml);
+    // On utilise une méthode plus simple pour trouver les titres
+    const items = [];
+    const regex = /<title>([^<]+)<\/title>/g;
+    let match;
+    
+    // On saute les premiers titres qui sont souvent le nom du flux
+    regex.exec(xml); 
+
+    while ((match = regex.exec(xml)) !== null && items.length < 5) {
+      const title = match[1].trim();
+      // On exclut les titres qui ressemblent à des noms de sites ou balises
+      if (!title.includes("<![CDATA[")) {
+        items.push(title);
+      }
+    }
     
     console.log(`Nombre d'articles trouvés : ${items.length}`);
-    items.forEach((item, index) => {
-      console.log(`${index + 1}. ${item.title}`);
+    items.forEach((title, index) => {
+      console.log(`${index + 1}. ${title}`);
     });
 
   } catch (error) {
-    console.error("Erreur de récupération :", error);
+    console.error("Erreur critique :", error);
   }
-}
-
-function extractRssItems(xml) {
-  const items = [];
-  // Utilisation d'expressions régulières pour extraire les balises <title>
-  const regex = /<item>([\s\S]*?)<\/item>/g;
-  let match;
-  
-  while ((match = regex.exec(xml)) !== null) {
-    const titleMatch = /<title><!\[CDATA\[(.*?)\]\]><\/title>/.exec(match[1]);
-    if (titleMatch) {
-      items.push({ title: titleMatch[1] });
-    }
-  }
-  return items.slice(0, 5); // On ne garde que les 5 premiers pour votre carrousel
 }
