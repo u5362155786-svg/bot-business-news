@@ -6,13 +6,14 @@ export default {
       const rss = await fetch(rssUrl).then(r => r.text());
       const title = rss.match(/<title>(.*?)<\/title>/)?.[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || "Business";
 
-      // 2. Génération de l'image avec un prompt minimaliste pour éviter les incohérences
-      const image = await env.AI.run('@cf/stabilityai/stable-diffusion-xl-base-1.0', {
-        prompt: `Minimalist graphic design, flat vector style, business concept representing: ${title}. 
-                 Clean white background, professional color palette (navy blue and white), 
-                 high quality geometric composition, organized and structured. 
-                 NO complex machinery, NO realistic clutter, NO blurry elements, NO text.`,
-        negative_prompt: "blurry, soft focus, painting, illustration, cartoon, low quality, distorted, watermark, text, realistic clutter, complex machinery"
+      // 2. Génération avec Flux.1 (plus cohérent et moderne)
+      // Ce modèle comprend beaucoup mieux les concepts de "design" que SDXL
+      const image = await env.AI.run('@cf/black-forest-labs/flux-1-schnell', {
+        prompt: `A high-end, modern business news illustration for ${title}. 
+                 Style: Professional, ultra-minimalist, sleek corporate design. 
+                 Color palette: Deep navy blue, white, and a single accent of bright orange. 
+                 Focus: Clean composition, smooth gradients, no chaotic elements, 
+                 no text, no letters, wide angle, 8k resolution, cinematic lighting.`
       });
 
       // 3. Retour de l'image
