@@ -1,32 +1,35 @@
 export default {
   async fetch(request, env) {
     try {
-      // 1. Vérification de la liaison AI
-      if (!env.AI) {
-        return new Response("Erreur : La liaison 'AI' n'est pas configurée dans wrangler.toml", { status: 500 });
-      }
-
-      // 2. Récupération simple d'un titre
       const rssUrl = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=fr&gl=FR&ceid=FR:fr";
-      const rssResponse = await fetch(rssUrl);
-      const xml = await rssResponse.text();
-      
-      // Extraction rapide du premier titre
-      const titleMatch = xml.match(/<title>(.*?)<\/title>/);
-      const title = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') : "Finance Business News";
+      const xml = await fetch(rssUrl).then(r => r.text());
+      const title = xml.match(/<title>(.*?)<\/title>/)?.[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') || "ACTU BUSINESS";
 
-      // 3. Appel de l'IA (Stable Diffusion)
-      const image = await env.AI.run('@cf/stabilityai/stable-diffusion-xl-base-1.0', {
-        prompt: `Professional business news illustration about: ${title}, minimalist, high quality, 4k`
+      // Génération SVG avec texte auto-ajusté
+      const words = title.split(' ');
+      let lines = [];
+      let currentLine = "";
+      words.forEach(w => {
+        if ((currentLine + w).length < 20) currentLine += w + " ";
+        else { lines.push(currentLine); currentLine = w + " "; }
       });
+      lines.push(currentLine);
 
-      // 4. Retour de l'image
-      return new Response(image, { 
-        headers: { "Content-Type": "image/png" } 
-      });
+      const svg = `
+      <svg width="1080" height="1080" viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1080" height="1080" fill="#1a1a1a"/>
+        <rect y="880" width="1080" height="200" fill="#cc0000"/>
+        <text x="540" y="300" font-family="Arial" font-size="60" fill="white" text-anchor="middle" font-weight="bold">
+          ${lines.map((line, i) => `<tspan x="540" dy="${i * 70}">${line.toUpperCase()}</tspan>`).join('')}
+        </text>
+        <text x="540" y="980" font-family="Arial" font-size="40" fill="white" text-anchor="middle" font-weight="bold">
+          FLASH BUSINESS
+        </text>
+      </svg>`;
 
-    } catch (err) {
-      return new Response("Erreur critique : " + err.message, { status: 500 });
+      return new Response(svg, { headers: { "Content-Type": "image/svg+xml" } });
+    } catch (e) {
+      return new Response("Erreur: " + e.message, { status: 500 });
     }
   }
 };
