@@ -3,13 +3,7 @@
   "main": "index.js",
   "compatibility_date": "2026-06-08",
   "observability": {
-    "logs": {
-      "enabled": false,
-      "invocation_logs": true
-    },
-    "traces": {
-      "enabled": false
-    }
+    "enabled": false
   },
   "triggers": {
     "crons": ["0 9 * * *"]
